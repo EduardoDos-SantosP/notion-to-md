@@ -56,8 +56,11 @@ export class NotionToMarkdown {
     nestingLevel: number = 0
   ): MdStringObject {
     let mdOutput: MdStringObject = {};
-
-    mdBlocks.forEach((mdBlocks) => {
+    
+    const listTypes = ["to_do", "bulleted_list_item", "numbered_list_item"];
+    
+    mdBlocks.forEach((mdBlocks, index, blocks) => {
+      const lastBlock: MdBlock | undefined = blocks[index - 1];
       // NOTE: toggle in the child blocks logic
       // adding a toggle check prevents duplicate
       // rendering of toggle title
@@ -68,16 +71,15 @@ export class NotionToMarkdown {
         mdBlocks.type !== "toggle" &&
         mdBlocks.type !== "child_page"
       ) {
-        if (
-          mdBlocks.type !== "to_do" &&
-          mdBlocks.type !== "bulleted_list_item" &&
-          mdBlocks.type !== "numbered_list_item"
-        ) {
+        if (!listTypes.includes(mdBlocks.type!)) {
           // initialize if key doesn't exist
           mdOutput[pageIdentifier] = mdOutput[pageIdentifier] || "";
 
+          if (listTypes.includes(lastBlock?.type!))
+            mdOutput[pageIdentifier] += '\n';
+          
           // add extra line breaks non list blocks
-          mdOutput[pageIdentifier] += `\n${md.addTabSpace(
+          mdOutput[pageIdentifier] += `${md.addTabSpace(
             mdBlocks.parent,
             nestingLevel
           )}\n\n`;
